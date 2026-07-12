@@ -1,0 +1,8 @@
+import express from 'express';
+import { getMaintenance } from '../controllers/maintenanceController.js';
+
+const router = express.Router();
+
+router.get('/', getMaintenance);
+
+export default router;
