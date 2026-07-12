@@ -1,4 +1,13 @@
+import { api } from './api';
+
 export const authService = {
-  login: async (credentials) => ({ success: true, credentials }),
-  signup: async (payload) => ({ success: true, payload }),
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (data) => api.post('/auth/register', data),
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+  getMe: () => api.get('/auth/me'),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
 };
