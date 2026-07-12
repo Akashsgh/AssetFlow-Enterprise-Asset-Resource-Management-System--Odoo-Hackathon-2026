@@ -1,8 +1,11 @@
 import express from 'express';
-import { getMaintenance } from '../controllers/maintenanceController.js';
+import { getAllMaintenance, createMaintenanceTicket, resolveTicket } from '../controllers/maintenanceController.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', getMaintenance);
+router.get('/', protect, getAllMaintenance);
+router.post('/', protect, createMaintenanceTicket);
+router.put('/:id/resolve', protect, resolveTicket);
 
 export default router;
