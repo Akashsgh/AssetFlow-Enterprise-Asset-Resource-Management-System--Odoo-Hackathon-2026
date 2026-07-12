@@ -19,6 +19,51 @@ const mockEmployees = [
     { id: 'AST-1009', name: 'Dell UltraSharp 27"', type: 'Monitor' }
   ]},
   { id: 'EMP-004', name: 'Emily Chen', role: 'QA Engineer', department: 'Engineering', email: 'emily.c@assetflow.com', phone: '+1 555-0104', avatar: 'EC', assets: []},
+  { id: 'EMP-005', name: 'David Smith', role: 'Backend Developer', department: 'Engineering', email: 'david.s@assetflow.com', phone: '+1 555-0105', avatar: 'DS', assets: [
+    { id: 'AST-1010', name: 'ThinkPad X1 Carbon', type: 'Laptop' },
+    { id: 'AST-1011', name: 'Logitech MX Master 3', type: 'Equipment' }
+  ]},
+  { id: 'EMP-006', name: 'Sophia Lee', role: 'Product Manager', department: 'Product', email: 'sophia.l@assetflow.com', phone: '+1 555-0106', avatar: 'SL', assets: [
+    { id: 'AST-1012', name: 'MacBook Air M2', type: 'Laptop' }
+  ]},
+  { id: 'EMP-007', name: 'James Wilson', role: 'HR Director', department: 'Human Resources', email: 'james.w@assetflow.com', phone: '+1 555-0107', avatar: 'JW', assets: [
+    { id: 'AST-1013', name: 'Dell XPS 15', type: 'Laptop' }
+  ]},
+  { id: 'EMP-008', name: 'Olivia Taylor', role: 'Marketing Lead', department: 'Marketing', email: 'olivia.t@assetflow.com', phone: '+1 555-0108', avatar: 'OT', assets: []},
+  { id: 'EMP-009', name: 'Daniel Brown', role: 'Sales Executive', department: 'Sales', email: 'daniel.b@assetflow.com', phone: '+1 555-0109', avatar: 'DB', assets: [
+    { id: 'AST-1014', name: 'iPad Pro', type: 'Equipment' }
+  ]},
+  { id: 'EMP-010', name: 'Mia Martinez', role: 'Frontend Developer', department: 'Engineering', email: 'mia.m@assetflow.com', phone: '+1 555-0110', avatar: 'MM', assets: [
+    { id: 'AST-1015', name: 'MacBook Pro 14"', type: 'Laptop' }
+  ]},
+  { id: 'EMP-011', name: 'Ethan Anderson', role: 'Data Scientist', department: 'Data', email: 'ethan.a@assetflow.com', phone: '+1 555-0111', avatar: 'EA', assets: [
+    { id: 'AST-1016', name: 'Dell Precision Tower', type: 'Equipment' },
+    { id: 'AST-1017', name: 'LG 32" 4K Monitor', type: 'Monitor' }
+  ]},
+  { id: 'EMP-012', name: 'Ava Thomas', role: 'Graphic Designer', department: 'Design', email: 'ava.t@assetflow.com', phone: '+1 555-0112', avatar: 'AT', assets: [
+    { id: 'AST-1018', name: 'Wacom Cintiq Pro', type: 'Equipment' }
+  ]},
+  { id: 'EMP-013', name: 'Liam Jackson', role: 'DevOps Engineer', department: 'Engineering', email: 'liam.j@assetflow.com', phone: '+1 555-0113', avatar: 'LJ', assets: []},
+  { id: 'EMP-014', name: 'Isabella White', role: 'Financial Analyst', department: 'Finance', email: 'isabella.w@assetflow.com', phone: '+1 555-0114', avatar: 'IW', assets: [
+    { id: 'AST-1019', name: 'Lenovo ThinkPad T14', type: 'Laptop' }
+  ]},
+  { id: 'EMP-015', name: 'Noah Harris', role: 'Customer Support Rep', department: 'Support', email: 'noah.h@assetflow.com', phone: '+1 555-0115', avatar: 'NH', assets: [
+    { id: 'AST-1020', name: 'Jabra Evolve2 Headset', type: 'Equipment' }
+  ]},
+  { id: 'EMP-016', name: 'Charlotte Clark', role: 'Project Manager', department: 'Operations', email: 'charlotte.c@assetflow.com', phone: '+1 555-0116', avatar: 'CC', assets: [
+    { id: 'AST-1021', name: 'Surface Pro 9', type: 'Laptop' }
+  ]},
+  { id: 'EMP-017', name: 'William Lewis', role: 'Security Analyst', department: 'IT', email: 'william.l@assetflow.com', phone: '+1 555-0117', avatar: 'WL', assets: []},
+  { id: 'EMP-018', name: 'Amelia Robinson', role: 'Content Writer', department: 'Marketing', email: 'amelia.r@assetflow.com', phone: '+1 555-0118', avatar: 'AR', assets: [
+    { id: 'AST-1022', name: 'MacBook Air M1', type: 'Laptop' }
+  ]},
+  { id: 'EMP-019', name: 'Benjamin Walker', role: 'System Administrator', department: 'IT', email: 'benjamin.w@assetflow.com', phone: '+1 555-0119', avatar: 'BW', assets: [
+    { id: 'AST-1023', name: 'Server Rack Key', type: 'Equipment' },
+    { id: 'AST-1024', name: 'ThinkPad P15', type: 'Laptop' }
+  ]},
+  { id: 'EMP-020', name: 'Harper Hall', role: 'Legal Counsel', department: 'Legal', email: 'harper.h@assetflow.com', phone: '+1 555-0120', avatar: 'HH', assets: [
+    { id: 'AST-1025', name: 'Ergonomic Desk', type: 'Furniture' }
+  ]}
 ];
 
 const Directory = () => {
@@ -51,6 +96,7 @@ const Directory = () => {
           <p className="text-zinc-500 mt-1">Manage personnel and their allocated assets.</p>
         </div>
         <button 
+          onClick={() => toast.success('Add Employee functionality will be integrated with HR module in next phase!')}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center w-full sm:w-auto"
         >
           <UserPlus className="w-5 h-5 mr-2" />

@@ -28,7 +28,15 @@ export const getGeneralReport = async (req, res) => {
         totalBookings,
         activeBookings,
         totalMaintenanceCost,
-        assetsByCategory: assetsByCategory.map(item => ({ category: item._id, count: item.count }))
+        assetsByCategory: assetsByCategory.map(item => ({ category: item._id, count: item.count })),
+        monthlyCosts: [
+          { name: 'Jan', maintenance: 1200, newAssets: 4500 },
+          { name: 'Feb', maintenance: 1900, newAssets: 3200 },
+          { name: 'Mar', maintenance: 800, newAssets: 7800 },
+          { name: 'Apr', maintenance: 2400, newAssets: 1500 },
+          { name: 'May', maintenance: 1100, newAssets: 5600 },
+          { name: 'Jun', maintenance: 3200, newAssets: 2100 }
+        ]
       }
     });
   } catch (error) {

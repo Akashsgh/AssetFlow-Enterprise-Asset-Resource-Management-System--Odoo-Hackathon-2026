@@ -9,6 +9,24 @@ const userSchema = new mongoose.Schema({
   department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
   phone: { type: String },
   avatar: { type: String },
+  location: { type: String },
+  twoFactorEnabled: { type: Boolean, default: false },
+  preferences: {
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'light' },
+    language: { type: String, default: 'English (US)' },
+    timezone: { type: String, default: 'IST (UTC+5:30)' },
+    dateFormat: { type: String, default: 'DD/MM/YYYY' },
+    currency: { type: String, default: 'INR (₹)' }
+  },
+  notificationSettings: {
+    criticalAlerts: { type: Boolean, default: true },
+    emailAlerts: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: true },
+    maintenanceUpdates: { type: Boolean, default: true },
+    bookingRequests: { type: Boolean, default: true },
+    auditReminders: { type: Boolean, default: false },
+    weeklyReport: { type: Boolean, default: true },
+  },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

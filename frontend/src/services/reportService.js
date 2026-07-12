@@ -9,4 +9,5 @@ export const reportService = {
   getCategoryDistribution: () => api.get('/reports/categories'),
   exportPDF: () => api.get('/reports/export/pdf'),
   exportCSV: () => api.get('/reports/export/csv'),
+  getGeneralReport: () => api.get('/reports/general'),
 };

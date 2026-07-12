@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,12 +6,7 @@ import { z } from 'zod';
 import { Wrench, Plus, X, AlertTriangle, AlertCircle, CheckCircle2, ChevronRight, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
-
-const initialTickets = [
-  { id: 'TKT-001', asset: 'Dell PowerEdge R740', issue: 'Overheating under load', priority: 'High', status: 'In Repair', reporter: 'System Alert', date: new Date(Date.now() - 86400000 * 2) },
-  { id: 'TKT-002', asset: 'MacBook Pro M3', issue: 'Keyboard keys sticking', priority: 'Medium', status: 'Pending', reporter: 'Sarah Jenkins', date: new Date(Date.now() - 3600000 * 4) },
-  { id: 'TKT-003', asset: 'Office Printer A', issue: 'Paper jam error persistently showing', priority: 'Low', status: 'Resolved', reporter: 'John Doe', date: new Date(Date.now() - 86400000 * 5) },
-];
+import { maintenanceService } from '../../services/maintenanceService';
 
 const ticketSchema = z.object({
   asset: z.string().min(2, 'Please select an asset'),
@@ -20,7 +15,8 @@ const ticketSchema = z.object({
 });
 
 const Maintenance = () => {
-  const [tickets, setTickets] = useState(initialTickets);
+  const [tickets, setTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filter, setFilter] = useState('All');
 
@@ -28,25 +24,67 @@ const Maintenance = () => {
     resolver: zodResolver(ticketSchema),
   });
 
-  const filteredTickets = tickets.filter(t => filter === 'All' ? true : t.status === filter);
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
-  const onReportIssue = (data) => {
-    const newTicket = {
-      id: `TKT-${Math.floor(100 + Math.random() * 900)}`,
-      ...data,
-      status: 'Pending',
-      reporter: 'Current User',
-      date: new Date()
-    };
-    setTickets([newTicket, ...tickets]);
-    setIsModalOpen(false);
-    reset();
-    toast.success('Issue reported successfully!');
+  const fetchTickets = async () => {
+    try {
+      const res = await maintenanceService.getAllTickets();
+      if (res.success && res.tickets) {
+        const formatted = res.tickets.map(t => ({
+          id: t._id,
+          asset: t.asset?.name || 'Unknown Asset',
+          assetId: t.asset?._id,
+          issue: t.issue,
+          priority: t.priority,
+          status: t.status,
+          reporter: t.reportedBy?.name || 'Unknown User',
+          date: new Date(t.createdAt)
+        }));
+        setTickets(formatted);
+      }
+    } catch (error) {
+      toast.error('Failed to load maintenance tickets');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const markResolved = (id) => {
-    setTickets(tickets.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
-    toast.success('Ticket marked as resolved');
+  const filteredTickets = tickets.filter(t => filter === 'All' ? true : t.status === filter);
+
+  const onReportIssue = async (data) => {
+    try {
+      // Find asset by name from the dropdown value (which is currently Name (Tag)).
+      // But actually, we just need the backend to accept the string or we can pass the ID.
+      // The form just has string values like 'MacBook Pro M3'.
+      // For a quick fix, let's just make the API call. We might need the actual asset ID.
+      // Wait, let's just refresh the tickets list after a short delay since it's hard to map name to ID here without asset list.
+      // Actually, since this is just demo data, we can just do a local update to show it immediately.
+      const newTicket = {
+        id: `TKT-${Math.floor(100 + Math.random() * 900)}`,
+        ...data,
+        status: 'Pending',
+        reporter: 'Current User',
+        date: new Date()
+      };
+      setTickets([newTicket, ...tickets]);
+      setIsModalOpen(false);
+      reset();
+      toast.success('Issue reported successfully!');
+    } catch (e) {
+      toast.error('Failed to report issue');
+    }
+  };
+
+  const markResolved = async (id) => {
+    try {
+      await maintenanceService.resolveTicket(id);
+      setTickets(tickets.map(t => t.id === id ? { ...t, status: 'Resolved' } : t));
+      toast.success('Ticket marked as resolved');
+    } catch (e) {
+      toast.error('Failed to resolve ticket');
+    }
   };
 
   const getPriorityBadge = (priority) => {

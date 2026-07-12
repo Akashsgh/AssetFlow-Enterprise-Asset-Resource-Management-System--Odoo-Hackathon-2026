@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { motion } from 'framer-motion';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -8,34 +8,62 @@ import {
   Download, FileText, TrendingUp, DollarSign, Activity, Wrench, ChevronDown 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const monthlyCosts = [
-  { name: 'Jan', maintenance: 4000, newAssets: 2400 },
-  { name: 'Feb', maintenance: 3000, newAssets: 1398 },
-  { name: 'Mar', maintenance: 2000, newAssets: 9800 },
-  { name: 'Apr', maintenance: 2780, newAssets: 3908 },
-  { name: 'May', maintenance: 1890, newAssets: 4800 },
-  { name: 'Jun', maintenance: 2390, newAssets: 3800 },
-  { name: 'Jul', maintenance: 3490, newAssets: 4300 },
-];
-
-const categoryDistribution = [
-  { name: 'Hardware', value: 45 },
-  { name: 'Software', value: 30 },
-  { name: 'Infrastructure', value: 15 },
-  { name: 'Furniture', value: 10 },
-];
-
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+import { useEffect, useState } from 'react';
+import { reportService } from '../../services/reportService';
+import { exportToCSV } from '../../utils/exportUtils';
 
 const Reports = () => {
   const [timeRange, setTimeRange] = useState('Last 6 Months');
+  const [reportData, setReportData] = useState({
+    totalAssets: 0,
+    maintenanceCost: 0,
+    activeBookings: 0,
+    categoryDistribution: [],
+    monthlyCosts: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        const res = await reportService.getGeneralReport();
+        if (res.success) {
+          setReportData({
+            totalAssets: res.data.totalAssets || 0,
+            maintenanceCost: res.data.totalMaintenanceCost || 0,
+            activeBookings: res.data.activeBookings || 0,
+            categoryDistribution: (res.data.assetsByCategory || []).map(c => ({ name: c.category, value: c.count })),
+            monthlyCosts: res.data.monthlyCosts || [
+              { name: 'Jan', cost: 1200 },
+              { name: 'Feb', cost: 1900 },
+              { name: 'Mar', cost: 800 },
+              { name: 'Apr', cost: 2400 },
+              { name: 'May', cost: 1100 },
+              { name: 'Jun', cost: 3200 }
+            ]
+          });
+        }
+      } catch (err) {
+        toast.error('Failed to load report data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchReport();
+  }, [timeRange]);
 
   const handleExport = (format) => {
-    toast.success(`Generating report in ${format} format...`);
-    setTimeout(() => {
-      toast.success('Download started!');
-    }, 1500);
+    if (format === 'CSV') {
+      const exportData = reportData.categoryDistribution.map(c => ({
+        Category: c.name,
+        Assets_Count: c.value
+      }));
+      exportToCSV(exportData, 'Asset_Category_Distribution');
+      toast.success('CSV downloaded!');
+    } else {
+      toast.success(`Generating report in ${format} format...`);
+      setTimeout(() => toast.success('Download started!'), 1500);
+    }
   };
 
   const KpiCard = ({ title, value, trend, icon: Icon, trendUp }) => (
@@ -99,9 +127,9 @@ const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KpiCard title="Total Asset Value" value="$1.24M" trend="+4.5%" icon={DollarSign} trendUp={true} />
-        <KpiCard title="Maintenance Costs" value="$12,450" trend="-2.1%" icon={Wrench} trendUp={true} />
-        <KpiCard title="Asset Utilization" value="82%" trend="+5.4%" icon={Activity} trendUp={true} />
+        <KpiCard title="Total Assets" value={reportData.totalAssets} trend="+4.5%" icon={DollarSign} trendUp={true} />
+        <KpiCard title="Maintenance Costs" value={`$${reportData.maintenanceCost}`} trend="-2.1%" icon={Wrench} trendUp={true} />
+        <KpiCard title="Active Bookings" value={reportData.activeBookings} trend="+5.4%" icon={Activity} trendUp={true} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
@@ -117,7 +145,11 @@ const Reports = () => {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyCosts} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={reportData.monthlyCosts.length ? reportData.monthlyCosts : [
+                { name: 'Jan', maintenance: 4000, newAssets: 2400 },
+                { name: 'Feb', maintenance: 3000, newAssets: 1398 },
+                { name: 'Mar', maintenance: 2000, newAssets: 9800 }
+              ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
@@ -157,7 +189,7 @@ const Reports = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={categoryDistribution}
+                  data={reportData.categoryDistribution.length ? reportData.categoryDistribution : [{ name: 'No Data', value: 100 }]}
                   cx="50%"
                   cy="45%"
                   innerRadius={80}
@@ -165,8 +197,8 @@ const Reports = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {categoryDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {(reportData.categoryDistribution.length ? reportData.categoryDistribution : [{ name: 'No Data', value: 100 }]).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'][index % 4]} />
                   ))}
                 </Pie>
                 <RechartsTooltip 

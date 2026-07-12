@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   useReactTable, getCoreRowModel, getFilteredRowModel, getPaginationRowModel,
@@ -8,8 +8,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { QRCodeSVG } from 'qrcode.react';
-import { Search, Plus, QrCode, X, ChevronLeft, ChevronRight, Box } from 'lucide-react';
+import { Search, Plus, QrCode, X, ChevronLeft, ChevronRight, Box, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { assetService } from '../../services/assetService';
+import { exportToCSV } from '../../utils/exportUtils';
 
 const initialData = [
   { id: 'AST-1001', name: 'MacBook Pro M3', category: 'Hardware', status: 'In Use', assignee: 'Sarah Jenkins', purchaseDate: '2024-01-15' },
@@ -27,10 +29,37 @@ const assetSchema = z.object({
 });
 
 const Assets = () => {
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [qrModalData, setQrModalData] = useState(null);
+
+  useEffect(() => {
+    fetchAssets();
+  }, []);
+
+  const fetchAssets = async () => {
+    try {
+      const res = await assetService.getAll();
+      if (res.success && res.assets) {
+        const formattedData = res.assets.map(asset => ({
+          _id: asset._id,
+          id: asset.tag,
+          name: asset.name,
+          category: asset.category,
+          status: asset.status === 'Under Maintenance' ? 'Maintenance' : asset.status,
+          assignee: asset.assignedTo?.name || 'Unassigned',
+          purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toISOString().split('T')[0] : '-'
+        }));
+        setData(formattedData);
+      }
+    } catch (err) {
+      toast.error('Failed to load assets');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const columns = useMemo(() => [
     { header: 'Asset ID', accessorKey: 'id', cell: info => <span className="font-mono font-medium text-zinc-600">{info.getValue()}</span> },
@@ -84,16 +113,30 @@ const Assets = () => {
     resolver: zodResolver(assetSchema),
   });
 
-  const onAddAsset = (formData) => {
-    const newAsset = {
-      id: `AST-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...formData,
-      assignee: 'Unassigned',
-    };
-    setData([newAsset, ...data]);
-    setIsAddModalOpen(false);
-    reset();
-    toast.success('Asset added successfully!');
+  const onAddAsset = async (formData) => {
+    try {
+      const payload = {
+        name: formData.name,
+        category: formData.category,
+        status: formData.status === 'Maintenance' ? 'Under Maintenance' : formData.status,
+        purchaseDate: formData.purchaseDate,
+        tag: `AST-${Math.floor(1000 + Math.random() * 9000)}`
+      };
+      const res = await assetService.create(payload);
+      if (res.success) {
+        toast.success('Asset added successfully!');
+        setIsAddModalOpen(false);
+        reset();
+        fetchAssets();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create asset');
+    }
+  };
+
+  const handleExport = () => {
+    const exportData = data.map(({ _id, ...rest }) => rest);
+    exportToCSV(exportData, 'Assets_List');
   };
 
   return (
@@ -103,13 +146,22 @@ const Assets = () => {
           <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">Assets</h1>
           <p className="text-zinc-500 mt-1">Manage and track your organization's physical and digital resources.</p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center w-full sm:w-auto"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Register Asset
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <button 
+            onClick={handleExport}
+            className="bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-700 px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all flex items-center justify-center"
+          >
+            <Download className="w-5 h-5 mr-2" />
+            Export CSV
+          </button>
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Register Asset
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">

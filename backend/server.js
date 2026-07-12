@@ -13,6 +13,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/users', userRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
