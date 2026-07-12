@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { Box, Mail, ArrowLeft } from 'lucide-react';
+import { Box, Mail, ArrowLeft, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -25,55 +25,71 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans text-slate-900">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 font-sans p-4 relative overflow-hidden">
+      
+      <div className="absolute inset-0 z-0 opacity-40">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-900 via-zinc-950 to-black"></div>
+      </div>
+      
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden"
+        animate={{ y: [0, -30, 0], x: [0, 20, 0] }}
+        transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+        className="absolute top-1/4 -left-20 w-96 h-96 bg-amber-600/10 rounded-full blur-[100px] z-0"
+      />
+      <motion.div 
+        animate={{ y: [0, 40, 0], x: [0, -30, 0] }}
+        transition={{ repeat: Infinity, duration: 12, ease: "easeInOut" }}
+        className="absolute bottom-1/4 -right-20 w-[30rem] h-[30rem] bg-orange-600/10 rounded-full blur-[120px] z-0"
+      />
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-lg bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl p-8 sm:p-10"
       >
-        <div className="p-8">
-          <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Box className="w-7 h-7 text-white" />
-            </div>
+        <div className="flex justify-center mb-8">
+          <div className="w-16 h-16 bg-amber-500/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-amber-500/20 shadow-lg">
+            <Box className="w-8 h-8 text-amber-500" />
           </div>
-          
-          <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">Reset your password</h2>
-          <p className="text-center text-slate-500 mb-8 text-sm">Enter your email address and we'll send you a link to reset your password.</p>
+        </div>
+        
+        <h2 className="text-3xl font-extrabold text-center text-white mb-3">Forgot Password?</h2>
+        <p className="text-center text-zinc-400 mb-10 text-sm leading-relaxed px-4">
+          No worries, we'll send you reset instructions. Enter the email address associated with your account.
+        </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="email"
-                  {...register('email')}
-                  className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${errors.email ? 'border-red-500' : 'border-slate-200'}`}
-                  placeholder="name@company.com"
-                />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-zinc-500 group-focus-within:text-amber-500 transition-colors" />
               </div>
-              {errors.email && <span className="text-xs text-red-500 mt-1 block">{errors.email.message}</span>}
+              <input
+                type="email"
+                {...register('email')}
+                className={`w-full pl-12 pr-4 py-3.5 bg-zinc-950/50 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all ${errors.email ? 'border-red-500/50' : ''}`}
+                placeholder="name@company.com"
+              />
             </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.98]"
-            >
-              {isSubmitting ? 'Sending link...' : 'Send reset link'}
-            </button>
-          </form>
-
-          <div className="mt-8 flex justify-center">
-            <Link to="/login" className="flex items-center text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to log in
-            </Link>
+            {errors.email && <span className="text-xs font-medium text-red-400 mt-2 block pl-1">{errors.email.message}</span>}
           </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center py-3.5 px-4 rounded-xl shadow-lg shadow-amber-900/20 text-sm font-bold text-zinc-950 bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-950 focus:ring-amber-500 disabled:opacity-70 transition-all duration-200 active:scale-[0.98] group"
+          >
+            {isSubmitting ? 'Sending instructions...' : 'Reset Password'}
+            {!isSubmitting && <Send className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+          </button>
+        </form>
+
+        <div className="mt-10 flex justify-center">
+          <Link to="/login" className="flex items-center text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to login
+          </Link>
         </div>
       </motion.div>
     </div>
