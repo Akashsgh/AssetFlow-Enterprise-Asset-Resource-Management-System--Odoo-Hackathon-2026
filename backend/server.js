@@ -8,6 +8,11 @@ import assetRoutes from './routes/assetRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import departmentRoutes from './routes/departmentRoutes.js';
 
 dotenv.config();
 
@@ -25,6 +30,11 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/audits', auditRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/departments', departmentRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
