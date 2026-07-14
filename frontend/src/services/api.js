@@ -10,6 +10,11 @@ const getHeaders = () => {
 
 const handleResponse = async (res) => {
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
     const err = await res.json().catch(() => ({ message: 'Something went wrong' }));
     throw new Error(err.message || 'Request failed');
   }

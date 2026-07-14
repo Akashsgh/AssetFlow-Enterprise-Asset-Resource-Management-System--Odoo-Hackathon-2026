@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Bell, Shield, Palette, Globe, Save, Moon, Sun, 
@@ -6,6 +6,8 @@ import {
   Smartphone, Monitor, Key, AlertTriangle, ChevronRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/userService';
 
 const sections = [
   { id: 'profile', label: 'Profile', icon: User, desc: 'Your personal information' },
@@ -48,40 +50,96 @@ const InputField = ({ label, icon: Icon, type = 'text', value, onChange, placeho
 );
 
 const Settings = () => {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('profile');
   const [darkMode, setDarkMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactor, setTwoFactor] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [profile, setProfile] = useState({
-    name: 'Sagar Mishra',
-    email: 'sagar@assetflow.com',
-    phone: '+91 98765 43210',
-    role: 'Frontend Developer',
-    department: 'Engineering',
-    location: 'Mumbai, India',
+    name: '', email: '', phone: '', role: '', department: '', location: ''
   });
 
   const [notifSettings, setNotifSettings] = useState({
-    emailAlerts: true,
-    pushNotifications: true,
-    maintenanceUpdates: true,
-    bookingRequests: true,
-    auditReminders: false,
-    weeklyReport: true,
-    criticalAlerts: true,
+    emailAlerts: true, pushNotifications: true, maintenanceUpdates: true,
+    bookingRequests: true, auditReminders: false, weeklyReport: true, criticalAlerts: true,
   });
 
   const [passwords, setPasswords] = useState({ current: '', newPass: '', confirm: '' });
   const [regional, setRegional] = useState({ language: 'English (US)', timezone: 'IST (UTC+5:30)', dateFormat: 'DD/MM/YYYY', currency: 'INR (₹)' });
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        if (!user || !user._id) return;
+        const res = await userService.getProfile(user._id);
+        if (res.success) {
+          const u = res.data;
+          setProfile({
+            name: u.name || '',
+            email: u.email || '',
+            phone: u.phone || '',
+            role: u.role || '',
+            department: u.department?.name || 'Unassigned',
+            location: u.location || '',
+          });
+          if (u.notificationSettings) setNotifSettings(u.notificationSettings);
+          if (u.preferences) {
+            setRegional(u.preferences);
+            setDarkMode(u.preferences.theme === 'dark');
+          }
+          setTwoFactor(u.twoFactorEnabled || false);
+        }
+      } catch (err) {
+        toast.error('Failed to load user settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUserData();
+  }, [user]);
+
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 800));
-    setSaving(false);
-    toast.success('Settings saved successfully!');
+    try {
+      if (activeSection === 'security' && passwords.current) {
+        if (passwords.newPass !== passwords.confirm) {
+          toast.error("New passwords don't match");
+          setSaving(false);
+          return;
+        }
+        await userService.changePassword({
+          userId: user._id,
+          currentPassword: passwords.current,
+          newPassword: passwords.newPass
+        });
+        setPasswords({ current: '', newPass: '', confirm: '' });
+      }
+
+      if (activeSection === 'profile') {
+        await userService.updateProfile({ userId: user._id, ...profile });
+      } else {
+        await userService.updateSettings({
+          userId: user._id,
+          preferences: { ...regional, theme: darkMode ? 'dark' : 'light' },
+          notificationSettings: notifSettings,
+          twoFactorEnabled: twoFactor
+        });
+      }
+      
+      toast.success('Settings saved successfully!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  }
 
   return (
     <div className="space-y-6">

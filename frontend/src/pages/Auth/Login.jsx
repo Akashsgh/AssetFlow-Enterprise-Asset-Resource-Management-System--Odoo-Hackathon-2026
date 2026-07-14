@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Box, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
@@ -21,12 +22,16 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      login({ email: data.email, role: 'Admin' });
-      toast.success('Login successful!');
-      navigate('/');
+      const res = await authService.login(data);
+      if (res.success) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        login(res.user);
+        toast.success('Login successful!');
+        navigate('/');
+      }
     } catch (error) {
-      toast.error('Login failed. Please try again.');
+      toast.error(error.message || 'Login failed. Please try again.');
     }
   };
 

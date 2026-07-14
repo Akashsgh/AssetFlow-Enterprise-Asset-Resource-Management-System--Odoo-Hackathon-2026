@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCheck, Trash2, AlertTriangle, Package, Wrench, Calendar, ClipboardCheck, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
+import { notificationService } from '../../services/notificationService';
+import { useAuth } from '../../context/AuthContext';
 
 const initialNotifications = [
   { id: 1, type: 'alert', title: 'Critical Asset Failure', message: 'Dell PowerEdge R740 has reported a critical overheating issue and requires immediate attention.', time: new Date(Date.now() - 1000 * 60 * 15), read: false },
@@ -13,8 +16,36 @@ const initialNotifications = [
 ];
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      if (!user?._id) return;
+      const res = await notificationService.getAllNotifications(user._id);
+      if (res.success) {
+        const formatted = res.data.map(n => ({
+          id: n._id,
+          type: n.type || 'alert',
+          title: n.title || 'Notification',
+          message: n.message,
+          time: new Date(n.createdAt),
+          read: n.read
+        }));
+        setNotifications(formatted);
+      }
+    } catch (err) {
+      toast.error('Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -23,18 +54,28 @@ const Notifications = () => {
     return true;
   });
 
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
+  const markAllRead = async () => {
+    try {
+      if (!user?._id) return;
+      await notificationService.markAllAsRead(user._id);
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      toast.success('All notifications marked as read');
+    } catch (e) {
+      toast.error('Failed to mark all as read');
+    }
   };
 
   const deleteNotification = (id) => {
+    // Local dismiss since no delete endpoint
     setNotifications(notifications.filter(n => n.id !== id));
     toast.success('Notification dismissed');
   };
 
-  const markRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  const markRead = async (id) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (e) {}
   };
 
   const getIcon = (type) => {

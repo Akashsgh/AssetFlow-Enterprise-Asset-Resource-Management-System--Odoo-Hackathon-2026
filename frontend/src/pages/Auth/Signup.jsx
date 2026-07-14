@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Box, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
 const signupSchema = z.object({
@@ -20,11 +21,13 @@ const Signup = () => {
 
   const onSubmit = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Account created successfully!');
-      navigate('/login');
+      const res = await authService.register({ name: data.fullName, email: data.email, password: data.password, role: 'user' });
+      if (res.success) {
+        toast.success('Account created successfully!');
+        navigate('/login');
+      }
     } catch (error) {
-      toast.error('Signup failed. Please try again.');
+      toast.error(error.message || 'Signup failed. Please try again.');
     }
   };
 

@@ -1,22 +1,53 @@
-import { useState } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ClipboardCheck, Search, Plus, X, Maximize, QrCode, 
-  CheckCircle2, AlertCircle, ChevronRight, PlayCircle
+  CheckCircle2, AlertCircle, ChevronRight, PlayCircle, Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-const mockAudits = [
-  { id: 'ADT-2024-001', department: 'IT Operations', inspector: 'Sarah Jenkins', date: 'Oct 12, 2024', status: 'Completed', accuracy: 98 },
-  { id: 'ADT-2024-002', department: 'Design Team', inspector: 'Mike Ross', date: 'Oct 05, 2024', status: 'Completed', accuracy: 100 },
-  { id: 'ADT-2024-003', department: 'Main Office', inspector: 'John Doe', date: 'Sep 28, 2024', status: 'Incomplete', accuracy: 85 },
-];
+import { auditService } from '../../services/auditService';
+import { exportToCSV } from '../../utils/exportUtils';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const Audits = () => {
-  const [audits, setAudits] = useState(mockAudits);
+  const { user } = useAuth();
+  const [audits, setAudits] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isNewAuditModalOpen, setIsNewAuditModalOpen] = useState(false);
   const [activeAudit, setActiveAudit] = useState(null);
   const [scanProgress, setScanProgress] = useState(0);
+
+  useEffect(() => {
+    fetchAudits();
+  }, []);
+
+  const fetchAudits = async () => {
+    try {
+      const res = await auditService.getAllAudits();
+      if (res.success) {
+        const formatted = res.data.map(a => ({
+          _id: a._id,
+          id: a._id.substring(18).toUpperCase(),
+          department: a.departmentName || 'Unknown',
+          inspector: a.inspector?.name || 'Unknown User',
+          date: new Date(a.createdAt).toLocaleDateString(),
+          status: a.status,
+          accuracy: a.accuracy
+        }));
+        setAudits(formatted);
+      }
+    } catch (err) {
+      toast.error('Failed to load audits');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    const exportData = audits.map(({ _id, ...rest }) => rest);
+    exportToCSV(exportData, 'Audits_Report');
+  };
 
   const startNewAudit = (e) => {
     e.preventDefault();
@@ -45,18 +76,25 @@ const Audits = () => {
     }
   };
 
-  const endAudit = () => {
-    const newAuditRec = {
-      id: activeAudit.id,
-      department: activeAudit.department,
-      inspector: 'Current User',
-      date: 'Just now',
-      status: scanProgress === 100 ? 'Completed' : 'Incomplete',
-      accuracy: scanProgress
-    };
-    setAudits([newAuditRec, ...audits]);
-    setActiveAudit(null);
-    toast.success('Audit saved to history');
+  const endAudit = async () => {
+    try {
+      const payload = {
+        departmentName: activeAudit.department,
+        inspector: user?._id || '000000000000000000000000', // fallback if no auth
+        status: scanProgress === 100 ? 'Completed' : 'Incomplete',
+        totalExpected: activeAudit.totalExpected,
+        totalScanned: activeAudit.scanned,
+        accuracy: scanProgress
+      };
+      const res = await auditService.createAudit(payload);
+      if (res.success) {
+        toast.success('Audit saved to history');
+        setActiveAudit(null);
+        fetchAudits();
+      }
+    } catch (e) {
+      toast.error('Failed to save audit');
+    }
   };
 
   return (
@@ -66,15 +104,24 @@ const Audits = () => {
           <h1 className="text-3xl font-extrabold text-zinc-900 tracking-tight">Audits & Inventory</h1>
           <p className="text-zinc-500 mt-1">Verify physical assets against database records.</p>
         </div>
-        {!activeAudit && (
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button 
-            onClick={() => setIsNewAuditModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center w-full sm:w-auto"
+            onClick={handleExport}
+            className="bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-700 px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all flex items-center justify-center"
           >
-            <PlayCircle className="w-5 h-5 mr-2" />
-            Start New Audit
+            <Download className="w-5 h-5 mr-2" />
+            Export CSV
           </button>
-        )}
+          {!activeAudit && (
+            <button 
+              onClick={() => setIsNewAuditModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all active:scale-95 flex items-center justify-center"
+            >
+              <PlayCircle className="w-5 h-5 mr-2" />
+              Start New Audit
+            </button>
+          )}
+        </div>
       </div>
 
       <AnimatePresence mode="wait">

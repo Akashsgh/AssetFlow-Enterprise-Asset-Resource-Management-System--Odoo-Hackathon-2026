@@ -14,6 +14,8 @@ import Reports from '../pages/Reports/Reports';
 import Notifications from '../pages/Notifications/Notifications';
 import Directory from '../pages/Directory/Directory';
 import Settings from '../pages/Settings/Settings';
+import NotFound from '../pages/NotFound/NotFound';
+
 
 const AppRoutes = () => {
   return (
@@ -36,6 +38,7 @@ const AppRoutes = () => {
           <Route path="directory" element={<Directory />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
   );
 };
